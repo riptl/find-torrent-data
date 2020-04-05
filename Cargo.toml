@@ -1,9 +1,19 @@
 [package]
 name = "find-torrent-data"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Richard Patel <me@terorie.dev>"]
 edition = "2018"
 description = "Tool to search for and link files that are part of a torrent"
+license = "MIT"
+homepage = "https://github.com/terorie/find-torrent-data"
+repository = "https://github.com/terorie/find-torrent-data"
+readme = "README.md"
+categories = ["command-line-utilities", "filesystem"]
+keywords = ["bittorrent"]
+documentation = "https://docs.rs/find-torrent-data"
+exclude = [
+	".github/workflows/rust.yml",
+]
 
 [dependencies]
 clap = "2.33"

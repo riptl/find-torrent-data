@@ -4,6 +4,8 @@ Reads a `.torrent` file and searches for files with matching content (file name 
 The files are then (sym)linked to a directory structure resembling the original torrent,
 ready to be loaded to a torrent client for (re-)seeding.
 
+Quick installation: `cargo install find-torrent-data`
+
 Help:
 
 ```
