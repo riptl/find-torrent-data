@@ -8,6 +8,6 @@ description = "Tool to search for and link files that are part of a torrent"
 [dependencies]
 clap = "2.33"
 lava_torrent = "0.4"
-multimap = "0.6"
+multimap = "0.8"
 sha-1 = "0.8"
 walkdir = "2"
