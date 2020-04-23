@@ -3,15 +3,15 @@ extern crate clap;
 
 use std::borrow::Borrow;
 use std::error::Error;
-use std::fs::{File, hard_link, create_dir_all};
-use std::io::{Seek, SeekFrom, Read, Result as IOResult};
+use std::fs::{create_dir_all, hard_link, File};
+use std::io::{Read, Result as IOResult, Seek, SeekFrom};
 use std::iter::Iterator;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-use lava_torrent::torrent::v1::{Torrent};
+use lava_torrent::torrent::v1::Torrent;
 use multimap::MultiMap;
-use sha1::{Sha1, Digest};
+use sha1::{Digest, Sha1};
 use walkdir::WalkDir;
 
 fn main() {
@@ -39,7 +39,7 @@ macro_rules! unwrap_or_break {
             Some(x) => x,
             None => break,
         };
-    }
+    };
 }
 
 #[derive(Clone)]
@@ -61,7 +61,8 @@ impl Descriptor {
     // `threshold` is the fraction of correct hashes.
     // For example, if `threshold` is 0.5, the first half must match.
     fn verify_file<T>(&self, file: &mut T, threshold: f32) -> IOResult<bool>
-        where T: Seek + Read
+    where
+        T: Seek + Read,
     {
         debug_assert!(threshold >= 0.0 && threshold <= 1.0);
         let count = (self.extents.len() as f32 * threshold) as usize;
@@ -112,9 +113,8 @@ fn run(cli: clap::ArgMatches) -> Result<(), Box<dyn Error>> {
         .map_err(|e| format!("Failed to read torrent: {}", e))?;
 
     // Lookup descriptors by size
-    let by_size: MultiMap<i64, Descriptor> = descriptors.iter()
-        .map(|d| (d.size, d.clone()))
-        .collect();
+    let by_size: MultiMap<i64, Descriptor> =
+        descriptors.iter().map(|d| (d.size, d.clone())).collect();
 
     // Walk input directories and detect matching file sizes
     let ctx = Rc::new(SearchContext {
@@ -126,9 +126,11 @@ fn run(cli: clap::ArgMatches) -> Result<(), Box<dyn Error>> {
     let input_dirs = cli.values_of_lossy("input").unwrap();
     for input_dir in input_dirs {
         for m in search_dir(&input_dir, &ctx) {
-            println!("{} <= {}",
+            println!(
+                "{} <= {}",
                 m.want_path.to_string_lossy(),
-                m.is_path.to_string_lossy());
+                m.is_path.to_string_lossy()
+            );
             if let Err(e) = m.link(ctx.create_symlinks) {
                 eprintln!("{}", e);
             }
@@ -147,32 +149,30 @@ struct SearchContext {
 
 // Searches a directory at path for files that match descriptors in `by_size`.
 // If `symlinks` is enabled, files behind symbolic links are also considered.
-fn search_dir(path: &str, ctx: &Rc<SearchContext>) -> impl Iterator<Item=Match> {
+fn search_dir(path: &str, ctx: &Rc<SearchContext>) -> impl Iterator<Item = Match> {
     let hash_threshold = ctx.hash_threshold;
     let ctx = Rc::clone(ctx);
     WalkDir::new(path)
         .follow_links(ctx.follow_symlinks)
         .into_iter()
         // Print and filter errors
-        .filter_map(|entry| entry
-            .map_err(|err| eprintln!("{}", err))
-            .ok()
-        )
+        .filter_map(|entry| entry.map_err(|err| eprintln!("{}", err)).ok())
         // Ignore directories
         .filter(|entry| entry.file_type().is_file())
         // Get metadata
-        .filter_map(|entry|
-            entry.metadata()
+        .filter_map(|entry| {
+            entry
+                .metadata()
                 .map_err(|err| eprintln!("{}", err))
                 .ok()
                 .map(|meta| (entry, meta))
-        )
+        })
         // Lookup sizes to get matches
         .filter_map(move |(entry, meta)| {
             let size = meta.len();
-            ctx.by_size.get(&(size as i64))
-                .map(|d|
-                    (entry.path().to_path_buf(), d.clone()))
+            ctx.by_size
+                .get(&(size as i64))
+                .map(|d| (entry.path().to_path_buf(), d.clone()))
         })
         // Verify hashes
         .filter(move |(path, d)| {
@@ -193,7 +193,10 @@ fn search_dir(path: &str, ctx: &Rc<SearchContext>) -> impl Iterator<Item=Match> 
         })
 }
 
-fn make_descriptors(torrent_path: &str, want_prefix: &PathBuf) -> Result<Vec<Descriptor>, Box<dyn Error>> {
+fn make_descriptors(
+    torrent_path: &str,
+    want_prefix: &PathBuf,
+) -> Result<Vec<Descriptor>, Box<dyn Error>> {
     let torrent = Torrent::read_from_file(torrent_path)?;
     if let Some(ref files) = torrent.files {
         // Directory torrent
@@ -238,7 +241,9 @@ fn make_descriptors(torrent_path: &str, want_prefix: &PathBuf) -> Result<Vec<Des
         Ok(descriptors)
     } else {
         // Single file torrent, collect all pieces and return single descriptor.
-        let extents = torrent.pieces.iter()
+        let extents = torrent
+            .pieces
+            .iter()
             .scan(0i64, |offset, piece| {
                 let ext = Extent {
                     offset: *offset,
