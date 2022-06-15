@@ -19,5 +19,5 @@ exclude = [
 clap = "3.2"
 lava_torrent = "0.7"
 multimap = "0.8"
-sha-1 = "0.8"
+sha-1 = "0.10"
 walkdir = "2"
